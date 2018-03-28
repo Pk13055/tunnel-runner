@@ -1,0 +1,22 @@
+{
+  "name": "tunnel-runner",
+  "version": "1.0.0",
+  "description": "Basic game in webGL",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pk13055/tunnel-runner.git"
+  },
+  "author": "Pratik",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Pk13055/tunnel-runner/issues"
+  },
+  "homepage": "https://github.com/Pk13055/tunnel-runner#readme",
+  "dependencies": {
+    "mathjs": "^4.0.1"
+  }
+}
