@@ -1,8 +1,16 @@
+/* GLOBAL VARIABLES */
 const canvas = document.querySelector('#glcanvas');
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-var tunnel = Tunnel(gl, 0, 0, 10, 4, 25, 0.01);
+
+var speed = 0.5;
+var tunnel = Tunnel(gl, 0, 0, 0, 4, 250, speed);
 var paused = false;
 
+var target = [tunnel.location[0], tunnel.location[1] - tunnel.size[0] + 0.1,
+tunnel.location[2] - tunnel.size[2] / 3],
+eye = [tunnel.location[0], tunnel.location[1], tunnel.location[2]];
+
+/* INITIAL SETUP */
 (function() {
     "use strict";
     // If we don't have a GL context, give up now
@@ -63,6 +71,25 @@ var paused = false;
     // objects we'll be drawing.
     tunnel.init();
 
+    // Initialize key events
+    (function() {
+        Mousetrap.bind(["p", "space"], () => {
+            paused = !paused;
+            if(paused) {
+                alert("Game Paused");
+                paused = false;
+            }
+            return false;
+        });
+        Mousetrap.bind(["left", "a"], () => { tunnel.rotation[2] += 36; return false; });
+        Mousetrap.bind(["d", "right"], () => { tunnel.rotation[2] -= 36; return false; });
+
+        Mousetrap.bind("r", () => { speed *= -1; tunnel.speed = speed; });
+
+    }());
+
+    // double the speed every 30 sec
+    setInterval(() => { speed *= 2; }, 0.5 * 60 * 1000);
 
     var then = 0;
 
@@ -71,8 +98,12 @@ var paused = false;
         now *= 0.001; // convert to seconds
         const deltaTime = now - then;
 
-        drawScene(gl, programInfo, deltaTime);
-        tunnel.tick();
+        if(!paused) {
+            drawScene(gl, programInfo, deltaTime);
+            tick_elements();
+            detect_collision();
+        }
+
         then = now;
 
         requestAnimationFrame(render);
@@ -81,11 +112,56 @@ var paused = false;
     requestAnimationFrame(render);
 }());
 
-//
-// Draw the scene.
-//
-function drawScene(gl, programInfo, deltaTime) {
 
+/**
+ * @description Detects collisions between the eye and various targets.
+ */
+function detect_collision() {
+
+}
+
+/**
+ * @description Ticks the eye and target as well as
+ * any another base elements.
+ */
+function tick_elements() {
+
+    // tick camera
+    eye[2] -= speed;
+    target[2] -= speed;
+
+    // tick all children
+    tunnel.tick(eye);
+}
+
+/**
+ * @description Resizes the canvas on window change
+ * @param {HTML} canvas
+ */
+function resize(canvas) {
+    // Lookup the size the browser is displaying the canvas.
+    var displayWidth  = canvas.clientWidth;
+    var displayHeight = canvas.clientHeight;
+
+    // Check if the canvas is not the same size.
+    if (canvas.width  != displayWidth ||
+        canvas.height != displayHeight) {
+
+      // Make the canvas the same size
+      canvas.width  = displayWidth;
+      canvas.height = displayHeight;
+    }
+  }
+
+/**
+ *
+ * @param {webGL} gl
+ * @param {JSON} programInfo
+ * @param {Number} deltaTime
+ * @description redraws the scene
+ */
+function drawScene(gl, programInfo, deltaTime) {
+    resize(gl.canvas);
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -104,7 +180,7 @@ function drawScene(gl, programInfo, deltaTime) {
     const fieldOfView = 45 * Math.PI / 180; // in radians
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
-    const zFar = 100.0;
+    const zFar = 200.0;
 
     const projectionMatrix = mat4.create();
 
@@ -116,13 +192,20 @@ function drawScene(gl, programInfo, deltaTime) {
     // the center of the scene.
     var modelViewMatrix = mat4.create();
 
+    mat4.lookAt(modelViewMatrix, eye, target, [0,1,0]);
+
     gl = tunnel.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
 
 }
 
-//
-// Initialize a shader program, so WebGL knows how to draw our data
-//
+
+/**
+ *
+ * @description Initialize a shader program, so WebGL knows how to draw our data
+ * @param {webGL} gl
+ * @param {template} vsSource
+ * @param {template} fsSource
+ */
 function initShaderProgram(gl, vsSource, fsSource) {
     const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
     const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
@@ -144,10 +227,14 @@ function initShaderProgram(gl, vsSource, fsSource) {
     return shaderProgram;
 }
 
-//
-// creates a shader of the given type, uploads the source and
-// compiles it.
-//
+
+/**
+ * @description creates a shader of the given type, uploads the source and
+ * compiles it.
+ * @param {welGL} gl
+ * @param {String} type
+ * @param {template} source
+ */
 function loadShader(gl, type, source) {
     const shader = gl.createShader(type);
 

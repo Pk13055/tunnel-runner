@@ -16,6 +16,8 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01) {
     /* TUNNEL Properties */
     var rotation = [0, 0, 0],
         location = [x, y, z],
+        radius = radius,
+        length = length,
         size = [radius, radius, length],
         speed = speed || 0.01;
     var __rotation = [0, 0, 0];
@@ -41,8 +43,7 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01) {
      */
     let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
 
-        rotation.map((v, i, r) => r[i] -= (r[i] > 360) ? 360 : 0);
-        rotation.map((v, i, r) => r[i] += (r[i] < -360) ? 360 : 0);
+        rotation.map((v, i, r) => r[i] = ((r[i] < 0) ? -1 : 1) * (Math.abs(r[i]) % 360));
 
         __rotation[0] = rotation[0] * Math.PI / 180;
         __rotation[1] = rotation[1] * Math.PI / 180;
@@ -62,9 +63,22 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01) {
         return gl;
     };
 
-    let tick = () => {
-        location[2] -= speed;
-        rotation[2] += 1;
+    /**
+     *
+     * @param {Array} eye
+     */
+    let tick = (eye) => {
+        let buf_oct_no = 3;
+        for (let i = 0; i < octagons.length; i++)
+            if (Math.abs(octagons[0].location[2] - eye[2]) >
+                buf_oct_no * octagons[0].size[2]) {
+                let old_octagon = octagons.shift()
+
+                // Append to the start
+                old_octagon.location[2] = octagons[octagons.length - 2].location[2] - old_octagon.size[2];
+                octagons.push(old_octagon);
+                i++;
+            }
         octagons.forEach(function (cur_oct, cur_idx) {
             cur_oct.tick();
         });

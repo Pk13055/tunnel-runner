@@ -50,8 +50,9 @@ function Octagon(gl, x, y, z, radius, width, speed) {
      */
     let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
 
-        rotation.map((v, i, r) => r[i] -= (r[i] > 360) ? 360 : 0);
-        rotation.map((v, i, r) => r[i] += (r[i] < -360) ? 360 : 0);
+        rotation.map((v, i, r) =>
+            r[i] = ((r[i] < 0) ? -1 : 1) *
+            (Math.abs(r[i]) % 360));;
 
         __rotation[0] = rotation[0] * Math.PI / 180;
         __rotation[1] = rotation[1] * Math.PI / 180;

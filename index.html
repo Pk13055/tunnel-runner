@@ -10,31 +10,41 @@
 	<meta charset="utf-8">
 	<!-- Global CSS -->
 	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-		crossorigin="anonymous">
+	    crossorigin="anonymous">
 	<link href="main.css" rel="stylesheet">
 
 	<!-- Global Javascript -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
 	    crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/4.0.1/math.min.js"></script>
+
+	<!-- Initializing Scripts  -->
 	<script src="math.js"></script>
+	<script src="mousetrap.min.js"></script>
+
+	<script src="gl-matrix.js"></script>
+	<script src="cube.js"></script>
 
 </head>
 
 <body>
-	<div class="container-fluid">
-		<div class="row">
-			<canvas id="glcanvas" height="768" width="1736"></canvas>
-		</div>
-	</div>
-</body>
+	<canvas id="glcanvas" height="1000" width="1000"></canvas>
+	<script>
+		let c_resize = () => $("canvas").attr({
+			height: window.innerHeight,
+			width: window.innerWidth
+		});
+		$(window).on('resize', c_resize);
+		c_resize();
+	</script>
+	<!-- main webGL render scripts -->
+	<script src="board.js"></script>
+	<script src="spike.js"></script>
 
-<!-- main render scripts -->
-<script src="gl-matrix.js"></script>
-<script src="cube.js"></script>
-<script src="octagon.js"></script>
-<script src="tunnel.js"></script>
-<script src="main.js"></script>
+	<script src="octagon.js"></script>
+
+	<script src="tunnel.js"></script>
+	<script src="main.js"></script>
+</body>
 
 </html>
