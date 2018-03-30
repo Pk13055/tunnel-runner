@@ -1,8 +1,17 @@
-/*
-	Primitive cube to serve as a boilerplate for complex shapes
-
+/**
+ * @author Pratik K
+ * @description Primitive Cube for all basic shape building
+ * @constructs Cube
+ * @extends None
+ * @param {gl} webGL instance
+ * @param {Number} x coordinate
+ * @param {Number} y coordinate
+ * @param {Number} z coordinate
+ * @param {Number} length length of the tunnel (X)
+ * @param {Number} height of the tunnel (Y)
+ * @param {Number} width of the tunnel (Z)
  */
-function Cube(gl, x, y, z, length, height, width) {
+function Cube(gl, x, y, z, length, height, width, angle) {
 
 
 	/* CUBE PROPERTIES */
@@ -13,7 +22,9 @@ function Cube(gl, x, y, z, length, height, width) {
 	const colorBuffer = gl.createBuffer();
 	// Build the element array buffer; this specifies the indices into the vertex arrays for each face's vertices.
 	const indexBuffer = gl.createBuffer();
-	var rotation = [45, 45, 45], size = [length, height, width], location = [x, y, z];
+	var rotation = [0, 0, angle],
+		size = [length, height, width],
+		location = [x, y, z];
 	var __rotation = [0, 0, 0];
 
 	let init = () => {
@@ -24,35 +35,28 @@ function Cube(gl, x, y, z, length, height, width) {
 		// Now create an array of positions for the cube.
 		const positions = [
 
-		   -length / 2,    -height / 2,    width / 2,
-			length / 2,    -height / 2,    width / 2,
-			length / 2,     height / 2,    width / 2,
-		   -length / 2,     height / 2,    width / 2,
+			-length / 2, -height / 2, width / 2,
+			length / 2, -height / 2, width / 2,
+			length / 2, height / 2, width / 2, -length / 2, height / 2, width / 2,
 
-		   -length / 2,    -height / 2,   -width / 2,
-		   -length / 2,     height / 2,   -width / 2,
-			length / 2,     height / 2,   -width / 2,
-			length / 2,    -height / 2,   -width / 2,
+			-length / 2, -height / 2, -width / 2, -length / 2, height / 2, -width / 2,
+			length / 2, height / 2, -width / 2,
+			length / 2, -height / 2, -width / 2,
 
-		   -length / 2,     height / 2,   -width / 2,
-		   -length / 2,     height / 2,    width / 2,
-			length / 2,     height / 2,    width / 2,
-			length / 2,     height / 2,   -width / 2,
+			-length / 2, height / 2, -width / 2, -length / 2, height / 2, width / 2,
+			length / 2, height / 2, width / 2,
+			length / 2, height / 2, -width / 2,
 
-		   -length / 2,    -height / 2,   -width / 2,
-			length / 2,    -height / 2,   -width / 2,
-			length / 2,    -height / 2,    width / 2,
-		   -length / 2,    -height / 2,    width / 2,
+			-length / 2, -height / 2, -width / 2,
+			length / 2, -height / 2, -width / 2,
+			length / 2, -height / 2, width / 2, -length / 2, -height / 2, width / 2,
 
-			length / 2,    -height / 2,   -width / 2,
-			length / 2,     height / 2,   -width / 2,
-			length / 2,     height / 2,    width / 2,
-			length / 2,    -height / 2,    width / 2,
+			length / 2, -height / 2, -width / 2,
+			length / 2, height / 2, -width / 2,
+			length / 2, height / 2, width / 2,
+			length / 2, -height / 2, width / 2,
 
-		   -length / 2,    -height / 2,   -width / 2,
-		   -length / 2,    -height / 2,    width / 2,
-		   -length / 2,     height / 2,    width / 2,
-		   -length / 2,     height / 2,   -width / 2,
+			-length / 2, -height / 2, -width / 2, -length / 2, -height / 2, width / 2, -length / 2, height / 2, width / 2, -length / 2, height / 2, -width / 2,
 		];
 
 		// Now pass the list of positions into WebGL to build the
@@ -62,20 +66,19 @@ function Cube(gl, x, y, z, length, height, width) {
 
 		// Now set up the colors for the faces. We'll use solid colors for each face.
 		const faceColors = [
-			[1.0, 1.0, 0.0, 1.0], // Right face: yellow
-			[1.0, 0.0, 0.0, 1.0], // Front face: red
-			[1.0, 1.0, 1.0, 1.0], // Back face: white
-			[0.0, 1.0, 0.0, 1.0], // Top face: green
-			[0.0, 0.0, 1.0, 1.0], // Bottom face: blue
-			[1.0, 0.0, 1.0, 1.0], // Left face: purple
+			[1.0, 1.0, 0.0, 0.7], // Right face: yellow
+			[1.0, 0.0, 0.0, 0.7], // Front face: red
+			[1.0, 1.0, 1.0, 0.7], // Back face: white
+			[0.0, 1.0, 0.0, 0.7], // Top face: green
+			[0.0, 0.0, 1.0, 0.7], // Bottom face: blue
+			[1.0, 0.0, 1.0, 0.7], // Left face: purple
 		];
 
 		// Convert the array of colors into a table for all the vertices.
 		var colors = [];
-		for (var j = 0; j < faceColors.length; ++j) {
-			const c = faceColors[j];
-			colors = colors.concat(c, c, c, c);
-		}
+		for (var j = 0; j < faceColors.length; ++j)
+			colors = colors.concat(faceColors[1], faceColors[3],
+				faceColors[5], faceColors[4]);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
@@ -105,9 +108,10 @@ function Cube(gl, x, y, z, length, height, width) {
 	 * @param {projectionMatrix} mat4 4x4 matrix instance
 	 * @param {programInfo} program information
 	 */
-	 let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
+	let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
 
-		rotation.map((v, i, r) => r[i] -= (r[i] > 360)? 360 : 0);
+		rotation.map((v, i, r) => r[i] -= (r[i] > 360) ? 360 : 0);
+		rotation.map((v, i, r) => r[i] += (r[i] < -360) ? 360 : 0);
 
 		__rotation[0] = rotation[0] * Math.PI / 180;
 		__rotation[1] = rotation[1] * Math.PI / 180;
@@ -117,9 +121,9 @@ function Cube(gl, x, y, z, length, height, width) {
 		// Now move the drawing position a bit to where we want to
 		// start drawing the square.
 		mat4.fromTranslation(modelViewMatrix, location);
-		mat4.rotate(modelViewMatrix, modelViewMatrix, __rotation[2], [0,0,1]);
-		mat4.rotate(modelViewMatrix, modelViewMatrix, __rotation[0], [1,0,0]);
-		mat4.rotate(modelViewMatrix, modelViewMatrix, __rotation[1], [0,1,0]);
+		mat4.rotate(modelViewMatrix, modelViewMatrix, __rotation[2], [0, 0, 1]);
+		mat4.rotate(modelViewMatrix, modelViewMatrix, __rotation[0], [1, 0, 0]);
+		mat4.rotate(modelViewMatrix, modelViewMatrix, __rotation[1], [0, 1, 0]);
 		modelViewMatrix = multiply(viewMatrix, modelViewMatrix);
 
 		// Tell WebGL how to pull out the positions from the position
@@ -153,7 +157,8 @@ function Cube(gl, x, y, z, length, height, width) {
 	 * @returns void
 	 */
 	let tick = () => {
-		rotation[1] += 1;
+		// cube specific tick
+		// add potential spike here
 	};
 
 	return {

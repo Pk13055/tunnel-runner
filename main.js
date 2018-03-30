@@ -1,6 +1,7 @@
 const canvas = document.querySelector('#glcanvas');
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-var cube = Cube(gl, 0, 0, -5, 4, 0.5, 2);
+var tunnel = Tunnel(gl, 0, 0, 10, 4, 25, 0.01);
+var paused = false;
 
 (function() {
     "use strict";
@@ -60,9 +61,8 @@ var cube = Cube(gl, 0, 0, -5, 4, 0.5, 2);
 
     // Here's where we call the routine that builds all the
     // objects we'll be drawing.
+    tunnel.init();
 
-    // const buffers = initBuffers(gl); // DELTE
-    cube.init(programInfo);
 
     var then = 0;
 
@@ -70,13 +70,14 @@ var cube = Cube(gl, 0, 0, -5, 4, 0.5, 2);
     function render(now) {
         now *= 0.001; // convert to seconds
         const deltaTime = now - then;
-        then = now;
 
         drawScene(gl, programInfo, deltaTime);
-        cube.tick();
+        tunnel.tick();
+        then = now;
 
         requestAnimationFrame(render);
     }
+
     requestAnimationFrame(render);
 }());
 
@@ -115,7 +116,7 @@ function drawScene(gl, programInfo, deltaTime) {
     // the center of the scene.
     var modelViewMatrix = mat4.create();
 
-    gl = cube.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
+    gl = tunnel.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
 
 }
 
