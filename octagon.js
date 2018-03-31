@@ -17,10 +17,15 @@ function Octagon(gl, x, y, z, radius, width, speed) {
     var rotation = [0, 0, 0],
         size = [radius, radius, width],
         location = [x, y, z],
+        has_pillar = 0,
+        has_spike = 0,
+        radius = radius,
+        width = width,
         speed = speed || 0.01;
     var __rotation = [0, 0, 0];
     // array that will store all the sides
     var faces = [];
+    var spikes = [];
 
     let init = () => {
         let no_faces = 8,
@@ -69,6 +74,10 @@ function Octagon(gl, x, y, z, radius, width, speed) {
             gl = cur_face.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
         });
 
+        spikes.forEach(function (cur_spike, cur_index) {
+            gl = cur_spike.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
+        });
+
         return gl;
     };
 
@@ -76,7 +85,38 @@ function Octagon(gl, x, y, z, radius, width, speed) {
         faces.forEach(function (face, i) {
             face.tick();
         });
+        spikes.forEach(function(spike, i) {
+            spike.tick();
+        });
     };
+
+    let add_pillar = () => {
+        has_pillar++;
+        pillar = Cube(gl, 0, 0, 0,
+            Math.random() * 2 * radius * Math.tan(Math.PI / 8),
+        2 * radius, width / 5, Math.round(Math.random()) * 360 / 8);
+        pillar.toggle_pillar();
+        pillar.init();
+        faces.push(pillar);
+    }
+
+    let add_spike = () => {
+        let angle = 0, per_side = 360 / 8, total_spikes = 2;
+        for (let i = 0; i < 8; i++) {
+            let cur_angle = angle * Math.PI / 180;
+            if(Math.random() > 3 / 8 && total_spikes) {
+                has_spike++;
+                total_spikes--;
+                let cur_spike = Spike(gl, radius * Math.cos(cur_angle),
+                radius * Math.sin(cur_angle), - width / 2,
+                2 * radius * Math.tan(per_side * Math.PI / 360), radius / 2
+                + Math.random() * radius / 2, cur_angle - 90, size[2]);
+                cur_spike.init();
+                spikes.push(cur_spike);
+            }
+            angle += per_side;
+        }
+    }
 
     return {
         location: location,
@@ -86,5 +126,11 @@ function Octagon(gl, x, y, z, radius, width, speed) {
         draw: draw,
         init: init,
         tick: tick,
+
+        add_pillar: add_pillar,
+        has_pillar: has_pillar,
+
+        add_spike: add_spike,
+        has_spike: has_spike,
     };
 }

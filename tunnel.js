@@ -11,7 +11,7 @@
  * @param {Number} width of the tunnel (Z)
  * @param {Number} speed of the tunnel (in Z)
  */
-function Tunnel(gl, x, y, z, radius, length, speed = 0.01) {
+function Tunnel(gl, x, y, z, radius, length, speed = 0.01, elements = 25) {
 
     /* TUNNEL Properties */
     var rotation = [0, 0, 0],
@@ -25,11 +25,17 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01) {
     var octagons = [];
 
     let init = () => {
-        let no_eles = 25,
+        let no_eles = elements,
+            no_pillars = Math.round(no_eles * 0.05);
+            no_spikes = Math.round(no_eles * 0.1);
             interval = length / no_eles;
         for (let i = 0, cur_z = 0; i < no_eles; i++, cur_z += interval) {
             let oct = Octagon(gl, 0, 0, -cur_z, radius, interval, speed);
             oct.init();
+            let is_chance = Math.random() < 0.5;
+            if(is_chance && no_pillars) { oct.add_pillar(); no_pillars--; }
+            else if(is_chance && no_spikes) { oct.add_spike(); no_spikes--; }
+
             octagons.push(oct);
         }
     };

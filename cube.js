@@ -24,6 +24,8 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 	const indexBuffer = gl.createBuffer();
 	var rotation = [0, 0, angle],
 		size = [length, height, width],
+		is_pillar = false,
+		direction = (Math.random() > 0.5)? -1 : 1, // 1 -> CW -1 -> CCW
 		location = [x, y, z];
 	var __rotation = [0, 0, 0];
 
@@ -66,9 +68,9 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 
 		// Now set up the colors for the faces. We'll use solid colors for each face.
 		const faceColors = [
-			[1.0, 1.0, 0.0, 0.7], // Right face: yellow
-			[1.0, 0.0, 0.0, 0.7], // Front face: red
-			[1.0, 1.0, 1.0, 0.7], // Back face: white
+			[1.0, 1.0, 0.0, 1.0], // Right face: yellow
+			[1.0, 0.0, 0.0, 1.0], // Front face: red
+			[1.0, 1.0, 1.0, 1.0], // Back face: white
 			[0.0, 1.0, 0.0, 0.7], // Top face: green
 			[0.0, 0.0, 1.0, 0.7], // Bottom face: blue
 			[1.0, 0.0, 1.0, 0.7], // Left face: purple
@@ -77,7 +79,9 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		// Convert the array of colors into a table for all the vertices.
 		var colors = [];
 		for (var j = 0; j < faceColors.length; ++j)
-			colors = colors.concat(faceColors[1], faceColors[3],
+		colors = (is_pillar)? colors.concat(faceColors[2], [0.0, 0.0, 0.0, 1],
+				faceColors[2], [0.0, 0.0, 0.0, 1])
+			: colors.concat(faceColors[1], faceColors[3],
 				faceColors[5], faceColors[4]);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -109,6 +113,7 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 	 * @param {programInfo} program information
 	 */
 	let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
+
 
 		rotation.map((v, i, r) =>
 			r[i] = ((r[i] < 0) ? -1 : 1) *
@@ -158,8 +163,8 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 	 * @returns void
 	 */
 	let tick = () => {
-		// cube specific tick
-		// add potential spike here
+		if(is_pillar)
+			rotation[2] += direction * 3;
 	};
 
 	return {
@@ -175,6 +180,9 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		draw: draw,
 		init: init,
 		tick: tick,
+
+		is_pillar: is_pillar,
+		toggle_pillar: () => is_pillar = !is_pillar,
 	};
 
 }

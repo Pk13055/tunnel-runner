@@ -8,7 +8,7 @@ var paused = false;
 
 var target = [tunnel.location[0], tunnel.location[1] - tunnel.size[0] + 0.1,
 tunnel.location[2] - tunnel.size[2] / 3],
-eye = [tunnel.location[0], tunnel.location[1], tunnel.location[2]];
+eye = [tunnel.location[0], tunnel.location[1] - 0.8 * tunnel.size[1], tunnel.location[2]];
 
 /* INITIAL SETUP */
 (function() {
@@ -81,8 +81,8 @@ eye = [tunnel.location[0], tunnel.location[1], tunnel.location[2]];
             }
             return false;
         });
-        Mousetrap.bind(["left", "a"], () => { tunnel.rotation[2] += 36; return false; });
-        Mousetrap.bind(["d", "right"], () => { tunnel.rotation[2] -= 36; return false; });
+        Mousetrap.bind(["left", "a"], () => { tunnel.rotation[2] -= 36; return false; });
+        Mousetrap.bind(["d", "right"], () => { tunnel.rotation[2] += 36; return false; });
 
         Mousetrap.bind("r", () => { speed *= -1; tunnel.speed = speed; });
 
