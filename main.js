@@ -1,17 +1,20 @@
 /* GLOBAL VARIABLES */
 const canvas = document.querySelector('#glcanvas');
+const audio = $("#bg-audio")[0];
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-
 var speed = 0.5;
+var score = 0;
+var life = 1000;
 var tunnel = Tunnel(gl, 0, 0, 0, 4, 250, speed);
 var paused = false;
 
 var target = [tunnel.location[0], tunnel.location[1] - tunnel.size[0] + 0.1,
-tunnel.location[2] - tunnel.size[2] / 3],
-eye = [tunnel.location[0], tunnel.location[1] - 0.8 * tunnel.size[1], tunnel.location[2]];
+        tunnel.location[2] - tunnel.size[2] / 3
+    ],
+    eye = [tunnel.location[0], tunnel.location[1] - 0.8 * tunnel.size[1], tunnel.location[2]];
 
 /* INITIAL SETUP */
-(function() {
+(function () {
     "use strict";
     // If we don't have a GL context, give up now
     if (!canvas) {
@@ -72,24 +75,38 @@ eye = [tunnel.location[0], tunnel.location[1] - 0.8 * tunnel.size[1], tunnel.loc
     tunnel.init();
 
     // Initialize key events
-    (function() {
+    (function () {
         Mousetrap.bind(["p", "space"], () => {
             paused = !paused;
-            if(paused) {
-                alert("Game Paused");
+            if (paused) {
+                audio.pause();
+                alert("Game Paused Score : " + String(score) + " Level : " +
+                    String(Math.round(10 * speed)) + " Life : " + String(life));
                 paused = false;
             }
+            audio.play();
             return false;
         });
-        Mousetrap.bind(["left", "a"], () => { tunnel.rotation[2] -= 36; return false; });
-        Mousetrap.bind(["d", "right"], () => { tunnel.rotation[2] += 36; return false; });
+        Mousetrap.bind(["left", "a"], () => {
+            tunnel.rotation[2] -= 36;
+            return false;
+        });
+        Mousetrap.bind(["d", "right"], () => {
+            tunnel.rotation[2] += 36;
+            return false;
+        });
 
-        Mousetrap.bind("r", () => { speed *= -1; tunnel.speed = speed; });
+        Mousetrap.bind("r", () => {
+            speed *= -1;
+            tunnel.speed = speed;
+        });
 
     }());
 
     // double the speed every 30 sec
-    setInterval(() => { speed *= 2; }, 0.5 * 60 * 1000);
+    setInterval(() => {
+        speed *= 2;
+    }, 0.5 * 60 * 1000);
 
     var then = 0;
 
@@ -98,10 +115,19 @@ eye = [tunnel.location[0], tunnel.location[1] - 0.8 * tunnel.size[1], tunnel.loc
         now *= 0.001; // convert to seconds
         const deltaTime = now - then;
 
-        if(!paused) {
+        if (!paused) {
             drawScene(gl, programInfo, deltaTime);
             tick_elements();
-            detect_collision();
+            if (detect_collision()) {
+                score -= 10;
+                life--;
+            } else score += speed * 1.6;
+            if (life == 0) {
+                audio.pause();
+                alert("Game Over Score : " + String(score) + " Level : " +
+                    String(Math.round(10 * speed)) + " Life : " + String(life));
+                return;
+            }
         }
 
         then = now;
@@ -140,18 +166,18 @@ function tick_elements() {
  */
 function resize(canvas) {
     // Lookup the size the browser is displaying the canvas.
-    var displayWidth  = canvas.clientWidth;
+    var displayWidth = canvas.clientWidth;
     var displayHeight = canvas.clientHeight;
 
     // Check if the canvas is not the same size.
-    if (canvas.width  != displayWidth ||
+    if (canvas.width != displayWidth ||
         canvas.height != displayHeight) {
 
-      // Make the canvas the same size
-      canvas.width  = displayWidth;
-      canvas.height = displayHeight;
+        // Make the canvas the same size
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
     }
-  }
+}
 
 /**
  *
@@ -192,7 +218,7 @@ function drawScene(gl, programInfo, deltaTime) {
     // the center of the scene.
     var modelViewMatrix = mat4.create();
 
-    mat4.lookAt(modelViewMatrix, eye, target, [0,1,0]);
+    mat4.lookAt(modelViewMatrix, eye, target, [0, 1, 0]);
 
     gl = tunnel.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
 
@@ -256,3 +282,58 @@ function loadShader(gl, type, source) {
 
     return shader;
 }
+
+/**
+ * @description When the image finished loading copy it into the texture.
+ * @param {webGL} gl
+ * @param {String} url
+ */
+function loadTexture(gl, url) {
+
+    let isPowerOf2 = (value) => { return (value & (value - 1)) == 0; };
+
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Because images have to be download over the internet
+    // they might take a moment until they are ready.
+    // Until then put a single pixel in the texture so we can
+    // use it immediately. When the image has finished downloading
+    // we'll update the texture with the contents of the image.
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+        width, height, border, srcFormat, srcType,
+        pixel);
+
+    const image = new Image();
+    image.onload = function () {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+            srcFormat, srcType, image);
+
+        // WebGL1 has different requirements for power of 2 images
+        // vs non power of 2 images so check if the image is a
+        // power of 2 in both dimensions.
+        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+            // Yes, it's a power of 2. Generate mips.
+            gl.generateMipmap(gl.TEXTURE_2D);
+        } else {
+            // No, it's not a power of 2. Turn of mips and set
+            // wrapping to clamp to edge
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        }
+    };
+    image.src = url;
+
+    return texture;
+}
+

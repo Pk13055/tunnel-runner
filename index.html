@@ -37,10 +37,13 @@
 		$(window).on('resize', c_resize);
 		c_resize();
 	</script>
-	<!-- main webGL render scripts -->
-	<script src="board.js"></script>
-	<script src="spike.js"></script>
+	<audio id="bg-audio">
+		<source src="background.mp3" type="audio/mpeg">
+	</audio>
+	<script> $("#bg-audio")[0].play(); </script>
 
+	<!-- main webGL render scripts -->
+	<script src="spike.js"></script>
 	<script src="octagon.js"></script>
 
 	<script src="tunnel.js"></script>
