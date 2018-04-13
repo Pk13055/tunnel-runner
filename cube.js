@@ -20,6 +20,7 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 	const positionBuffer = gl.createBuffer();
 	// colorBuffer for the cube's colors
 	const colorBuffer = gl.createBuffer();
+	const normalBuffer = gl.createBuffer();
 	const textureCoordBuffer = gl.createBuffer();
 	// Build the element array buffer; this specifies the indices into the vertex arrays for each face's vertices.
 	const indexBuffer = gl.createBuffer();
@@ -108,43 +109,83 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 			new Uint16Array(indices), gl.STATIC_DRAW);
 
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+		gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
-			const textureCoordinates = [
-				// Front
-				0.0, 0.0,
-				1.0, 0.0,
-				1.0, 1.0,
-				0.0, 1.0,
-				// Back
-				0.0, 0.0,
-				1.0, 0.0,
-				1.0, 1.0,
-				0.0, 1.0,
-				// Top
-				0.0, 0.0,
-				1.0, 0.0,
-				1.0, 1.0,
-				0.0, 1.0,
-				// Bottom
-				0.0, 0.0,
-				1.0, 0.0,
-				1.0, 1.0,
-				0.0, 1.0,
-				// Right
-				0.0, 0.0,
-				1.0, 0.0,
-				1.0, 1.0,
-				0.0, 1.0,
-				// Left
-				0.0, 0.0,
-				1.0, 0.0,
-				1.0, 1.0,
-				0.0, 1.0,
-			];
+		const textureCoordinates = [
+			// Front
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Back
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Top
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Bottom
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Right
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Left
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+		];
 
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
-				gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
+			gl.STATIC_DRAW);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+
+		const vertexNormals = [
+			// Front
+			0.0, 0.0, 1.0,
+			0.0, 0.0, 1.0,
+			0.0, 0.0, 1.0,
+			0.0, 0.0, 1.0,
+
+			// Back
+			0.0, 0.0, -1.0,
+			0.0, 0.0, -1.0,
+			0.0, 0.0, -1.0,
+			0.0, 0.0, -1.0,
+
+			// Top
+			0.0, 1.0, 0.0,
+			0.0, 1.0, 0.0,
+			0.0, 1.0, 0.0,
+			0.0, 1.0, 0.0,
+
+			// Bottom
+			0.0, -1.0, 0.0,
+			0.0, -1.0, 0.0,
+			0.0, -1.0, 0.0,
+			0.0, -1.0, 0.0,
+
+			// Right
+			1.0, 0.0, 0.0,
+			1.0, 0.0, 0.0,
+			1.0, 0.0, 0.0,
+			1.0, 0.0, 0.0,
+
+			// Left
+			-1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0
+		];
+
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals),
+			gl.STATIC_DRAW);
 
 	};
 
@@ -197,6 +238,11 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		// Tell WebGL to use our program when drawing
 		gl.useProgram(programInfo.program);
 
+		const normalMatrix = mat4.create();
+	  	mat4.invert(normalMatrix, modelViewMatrix);
+  		mat4.transpose(normalMatrix, normalMatrix);
+		gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix, false, normalMatrix);
+
 		// Set the shader uniforms
 		gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
 		gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
@@ -209,6 +255,24 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		gl.bindTexture(gl.TEXTURE_2D, bind_texture);
 		// Tell the shader we bound the texture to texture unit 0
 		gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
+		{
+			const numComponents = 3;
+			const type = gl.FLOAT;
+			const normalize = false;
+			const stride = 0;
+			const offset = 0;
+			gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+			gl.vertexAttribPointer(
+				programInfo.attribLocations.vertexNormal,
+				numComponents,
+				type,
+				normalize,
+				stride,
+				offset);
+			gl.enableVertexAttribArray(
+				programInfo.attribLocations.vertexNormal);
+		  }
 
 		gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
 
@@ -226,11 +290,11 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 
 	/**
 	 *	@param {Array} eye
-	  */
+	 */
 	let detect_collision = (eye) => {
 		console.log(eye);
 		let final = eye;
-		if(final[2] > 250) final[2] -= 250;
+		if (final[2] > 250) final[2] -= 250;
 		return final[2] < 9;
 	};
 
@@ -238,6 +302,7 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 
 		position: positionBuffer,
 		color: colorBuffer,
+		normal: normalBuffer,
 		textureCoord: textureCoordBuffer,
 		indices: indexBuffer,
 
