@@ -53,7 +53,7 @@ function Octagon(gl, x, y, z, radius, width, speed) {
      * @param {JSON} programInfo information
      * @returns {gl} gl instance
      */
-    let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
+    let draw = (gl, viewMatrix, projectionMatrix, programInfo, textures) => {
 
         rotation.map((v, i, r) =>
             r[i] = ((r[i] < 0) ? -1 : 1) *
@@ -71,11 +71,11 @@ function Octagon(gl, x, y, z, radius, width, speed) {
         modelViewMatrix = multiply(viewMatrix, modelViewMatrix);
 
         faces.forEach(function (cur_face, cur_index) {
-            gl = cur_face.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
+            gl = cur_face.draw(gl, modelViewMatrix, projectionMatrix, programInfo, textures.wood);
         });
 
         spikes.forEach(function (cur_spike, cur_index) {
-            gl = cur_spike.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
+            gl = cur_spike.draw(gl, modelViewMatrix, projectionMatrix, programInfo, textures.metal);
         });
 
         return gl;
@@ -118,6 +118,19 @@ function Octagon(gl, x, y, z, radius, width, speed) {
         }
     }
 
+    let detect_collision = (eye) => {
+        let status = false;
+        spikes.forEach((v, i) => {
+            status = status || v.detect_collision(ele_abs(subtract(
+                ele_abs(eye), ele_abs(location))));
+        });
+        faces.forEach((v, i) => {
+            status =  status || (v.is_pillar && v.detect_collision(
+                ele_abs(subtract(ele_abs(eye), ele_abs(location)))));
+        });
+        return status;
+    };
+
     return {
         location: location,
         size: size,
@@ -126,6 +139,8 @@ function Octagon(gl, x, y, z, radius, width, speed) {
         draw: draw,
         init: init,
         tick: tick,
+
+        detect_collision: detect_collision,
 
         add_pillar: add_pillar,
         has_pillar: has_pillar,

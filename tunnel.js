@@ -1,6 +1,6 @@
 /**
  * @author Pratik K
- * @description Primitive octagon made out of cubes
+ * @description Primitive octagon ma out of cubes
  * @constructs Octagon
  * @extends Cube
  * @param {gl} webGL instance
@@ -47,7 +47,7 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01, elements = 25) {
      * @param {JSON} programInfo information
      * @returns {gl} gl instance
      */
-    let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
+    let draw = (gl, viewMatrix, projectionMatrix, programInfo, texture) => {
 
         rotation.map((v, i, r) => r[i] = ((r[i] < 0) ? -1 : 1) * (Math.abs(r[i]) % 360));
 
@@ -63,7 +63,7 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01, elements = 25) {
         modelViewMatrix = multiply(viewMatrix, modelViewMatrix);
 
         octagons.forEach(function (cur_oct, cur_index) {
-            gl = cur_oct.draw(gl, modelViewMatrix, projectionMatrix, programInfo);
+            gl = cur_oct.draw(gl, modelViewMatrix, projectionMatrix, programInfo, textures);
         });
 
         return gl;
@@ -90,11 +90,22 @@ function Tunnel(gl, x, y, z, radius, length, speed = 0.01, elements = 25) {
         });
     };
 
+    /**
+     * @param {Array} eye
+      */
+    let detect_collision = (eye) => {
+        let status = false;
+        octagons.forEach((v, i) => {
+            status = status || v.detect_collision(eye);
+        });
+        return status;
+    };
+
     return {
         location: location,
         size: size,
         rotation: rotation,
-
+        detect_collision: detect_collision,
         draw: draw,
         init: init,
         tick: tick,

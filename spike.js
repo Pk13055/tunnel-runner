@@ -19,6 +19,7 @@ function Spike(gl, x, y, z, base, height, angle, stride) {
 	const positionBuffer = gl.createBuffer();
 	// colorBuffer for the Spike's colors
 	const colorBuffer = gl.createBuffer();
+	const textureCoordBuffer = gl.createBuffer();
 	// Build the element array buffer; this specifies the indices into the vertex arrays for each face's vertices.
     const indexBuffer = gl.createBuffer();
     var rotation = [0, 0, angle],
@@ -89,6 +90,44 @@ function Spike(gl, x, y, z, base, height, angle, stride) {
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
 			new Uint16Array(indices), gl.STATIC_DRAW);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+
+		const textureCoordinates = [
+			// Front
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Back
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Top
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Bottom
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Right
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+			// Left
+			0.0, 0.0,
+			1.0, 0.0,
+			1.0, 1.0,
+			0.0, 1.0,
+		];
+
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
+			gl.STATIC_DRAW);
+
 	};
 
 	/**
@@ -97,7 +136,7 @@ function Spike(gl, x, y, z, base, height, angle, stride) {
 	 * @param {projectionMatrix} mat4 4x4 matrix instance
 	 * @param {programInfo} program information
 	 */
-	let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
+	let draw = (gl, viewMatrix, projectionMatrix, programInfo, texture) => {
 
 
 		rotation.map((v, i, r) =>
@@ -123,14 +162,19 @@ function Spike(gl, x, y, z, base, height, angle, stride) {
 		gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
-		// Tell WebGL how to pull out the colors from the color buffer
-		// into the vertexColor attribute.
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-		gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+		// // Tell WebGL how to pull out the colors from the color buffer
+		// // into the vertexColor attribute.
+		// gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+		// gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
+		// gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
 
 		// Tell WebGL which indices to use to index the vertices
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+		// tell webgl how to pull out the texture coordinates from buffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+		gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
 		// Tell WebGL to use our program when drawing
 		gl.useProgram(programInfo.program);
@@ -138,6 +182,13 @@ function Spike(gl, x, y, z, base, height, angle, stride) {
 		// Set the shader uniforms
 		gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
 		gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+
+		// Tell WebGL we want to affect texture unit 0
+		gl.activeTexture(gl.TEXTURE0);
+		// Bind the texture to texture unit 0
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		// Tell the shader we bound the texture to texture unit 0
+		gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 		gl.drawElements(gl.TRIANGLES, 4 * 3, gl.UNSIGNED_SHORT, 0);
 
 		return gl;
@@ -152,15 +203,27 @@ function Spike(gl, x, y, z, base, height, angle, stride) {
         if(Math.abs(location[2] - ref_point) > stride / 2) direction *= -1;
 	};
 
+	/**
+	 * @param {Array} eye
+	  */
+	let detect_collision = (eye) => {
+		let final = eye;
+		if(final[2] > 250) final[2] -= 250;
+		return final[2] < 9;
+	};
+
 	return {
 
 		position: positionBuffer,
 		color: colorBuffer,
+		textureCoord: textureCoordBuffer,
 		indices: indexBuffer,
 
 		location: location,
 		size: size,
 		rotation: rotation,
+
+		detect_collision: detect_collision,
 
 		draw: draw,
 		init: init,

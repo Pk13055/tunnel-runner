@@ -20,12 +20,13 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 	const positionBuffer = gl.createBuffer();
 	// colorBuffer for the cube's colors
 	const colorBuffer = gl.createBuffer();
+	const textureCoordBuffer = gl.createBuffer();
 	// Build the element array buffer; this specifies the indices into the vertex arrays for each face's vertices.
 	const indexBuffer = gl.createBuffer();
 	var rotation = [0, 0, angle],
 		size = [length, height, width],
 		is_pillar = false,
-		direction = (Math.random() > 0.5)? -1 : 1, // 1 -> CW -1 -> CCW
+		direction = (Math.random() > 0.5) ? -1 : 1, // 1 -> CW -1 -> CCW
 		location = [x, y, z];
 	var __rotation = [0, 0, 0];
 
@@ -61,6 +62,8 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 			-length / 2, -height / 2, -width / 2, -length / 2, -height / 2, width / 2, -length / 2, height / 2, width / 2, -length / 2, height / 2, -width / 2,
 		];
 
+
+
 		// Now pass the list of positions into WebGL to build the
 		// shape. We do this by creating a Float32Array from the
 		// JavaScript array, then use it to fill the current buffer.
@@ -79,9 +82,9 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		// Convert the array of colors into a table for all the vertices.
 		var colors = [];
 		for (var j = 0; j < faceColors.length; ++j)
-		colors = (is_pillar)? colors.concat(faceColors[2], [0.0, 0.0, 0.0, 1],
-				faceColors[2], [0.0, 0.0, 0.0, 1])
-			: colors.concat(faceColors[1], faceColors[3],
+			colors = (is_pillar) ? colors.concat(faceColors[2], [0.0, 0.0, 0.0, 1],
+				faceColors[2], [0.0, 0.0, 0.0, 1]) :
+			colors.concat(faceColors[1], faceColors[3],
 				faceColors[5], faceColors[4]);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -104,15 +107,54 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
 			new Uint16Array(indices), gl.STATIC_DRAW);
 
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+
+			const textureCoordinates = [
+				// Front
+				0.0, 0.0,
+				1.0, 0.0,
+				1.0, 1.0,
+				0.0, 1.0,
+				// Back
+				0.0, 0.0,
+				1.0, 0.0,
+				1.0, 1.0,
+				0.0, 1.0,
+				// Top
+				0.0, 0.0,
+				1.0, 0.0,
+				1.0, 1.0,
+				0.0, 1.0,
+				// Bottom
+				0.0, 0.0,
+				1.0, 0.0,
+				1.0, 1.0,
+				0.0, 1.0,
+				// Right
+				0.0, 0.0,
+				1.0, 0.0,
+				1.0, 1.0,
+				0.0, 1.0,
+				// Left
+				0.0, 0.0,
+				1.0, 0.0,
+				1.0, 1.0,
+				0.0, 1.0,
+			];
+
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
+				gl.STATIC_DRAW);
+
 	};
 
 	/**
 	 * @param {gl} gl instance for the game
 	 * @param {viewMatrix} mat4 4x4 matrix instance
 	 * @param {projectionMatrix} mat4 4x4 matrix instance
-	 * @param {programInfo} program information
+	 * @param {JSON} program information
 	 */
-	let draw = (gl, viewMatrix, projectionMatrix, programInfo) => {
+	let draw = (gl, viewMatrix, projectionMatrix, programInfo, textures) => {
 
 
 		rotation.map((v, i, r) =>
@@ -138,14 +180,19 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
-		// Tell WebGL how to pull out the colors from the color buffer
-		// into the vertexColor attribute.
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-		gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+		// // Tell WebGL how to pull out the colors from the color buffer
+		// // into the vertexColor attribute.
+		// gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+		// gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
+		// gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
 
 		// Tell WebGL which indices to use to index the vertices
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+		// tell webgl how to pull out the texture coordinates from buffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+		gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
 		// Tell WebGL to use our program when drawing
 		gl.useProgram(programInfo.program);
@@ -153,6 +200,16 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 		// Set the shader uniforms
 		gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
 		gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+
+		// Tell WebGL we want to affect texture unit 0
+		gl.activeTexture(gl.TEXTURE0);
+		// Bind the texture to texture unit 0
+		let bind_texture = textures.lightwood;
+
+		gl.bindTexture(gl.TEXTURE_2D, bind_texture);
+		// Tell the shader we bound the texture to texture unit 0
+		gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
 		gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
 
 		return gl;
@@ -163,19 +220,32 @@ function Cube(gl, x, y, z, length, height, width, angle) {
 	 * @returns void
 	 */
 	let tick = () => {
-		if(is_pillar)
+		if (is_pillar)
 			rotation[2] += direction * 3;
+	};
+
+	/**
+	 *	@param {Array} eye
+	  */
+	let detect_collision = (eye) => {
+		console.log(eye);
+		let final = eye;
+		if(final[2] > 250) final[2] -= 250;
+		return final[2] < 9;
 	};
 
 	return {
 
 		position: positionBuffer,
 		color: colorBuffer,
+		textureCoord: textureCoordBuffer,
 		indices: indexBuffer,
 
 		location: location,
 		size: size,
 		rotation: rotation,
+
+		detect_collision: detect_collision,
 
 		draw: draw,
 		init: init,

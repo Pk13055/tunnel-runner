@@ -14,6 +14,9 @@ function add([x, y, z], [p, q, r]) {
 	return [x + p, y + q, z + r]
 }
 
+function ele_abs(vec) {
+	return vec.map((v, i) => { return Math.abs(v); });
+}
 function subtract([x, y, z], [p, q, r]) {
 	return [x - p, y - q, z - r]
 }
